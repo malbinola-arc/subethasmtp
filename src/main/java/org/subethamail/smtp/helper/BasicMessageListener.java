@@ -9,6 +9,8 @@ public interface BasicMessageListener {
      * Process a message that has just arrived. If you throw and you want the caller
      * to be given the SMTP error response then throw a {@link RejectException}.
      * 
+     * @param context
+     *            context of the message
      * @param from
      *            source of message
      * @param to
