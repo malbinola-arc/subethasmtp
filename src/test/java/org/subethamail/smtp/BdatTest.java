@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.subethamail.smtp.client.SMTPException;
@@ -56,7 +57,7 @@ public class BdatTest {
         }
     }
 
-    @Test
+    @Test(timeout=20000)
     public void testTwoBdatCommands() throws UnknownHostException, SMTPException, IOException {
         MyListener listener = new MyListener();
         SMTPServer server = SMTPServer.port(25000).messageHandler(listener).build();
@@ -91,6 +92,52 @@ public class BdatTest {
                 client.from("shouldFail");
             } catch (SMTPException e) {
                 assertEquals("503 Error: expected BDAT command line but encountered: 'MAIL FROM: <shouldFail>'",
+                        e.getMessage());
+            }
+        } finally {
+            server.stop();
+        }
+    }
+
+    @Test
+    public void testBdatAfterBdatLast() throws IOException {
+        MyListener listener = new MyListener();
+        SMTPServer server = SMTPServer.port(25000).messageHandler(listener).build();
+        try {
+            server.start();
+            SmartClient client = SmartClient.createAndConnect("localhost", 25000, "clientHeloHost");
+            assertTrue(client.getExtensions().containsKey("CHUNKING"));
+            client.from("me@oz.com");
+            client.to("dave@oz.com");
+            client.bdatLast("hello");
+
+            try {
+                client.bdat("hello");
+                Assert.fail();
+            } catch (SMTPException e) {
+                assertEquals("503 5.5.1 Error: need MAIL command",
+                        e.getMessage());
+            }
+        } finally {
+            server.stop();
+        }
+    }
+
+    @Test
+    public void testEmptyBdat() throws IOException {
+        MyListener listener = new MyListener();
+        SMTPServer server = SMTPServer.port(25000).messageHandler(listener).build();
+        try {
+            server.start();
+            SmartClient client = SmartClient.createAndConnect("localhost", 25000, "clientHeloHost");
+            assertTrue(client.getExtensions().containsKey("CHUNKING"));
+            client.from("me@oz.com");
+            client.to("dave@oz.com");
+            try {
+                client.bdat("");
+                Assert.fail();
+            } catch (SMTPException e) {
+                assertEquals("551 5.7.1 Error: Null BDAT request",
                         e.getMessage());
             }
         } finally {

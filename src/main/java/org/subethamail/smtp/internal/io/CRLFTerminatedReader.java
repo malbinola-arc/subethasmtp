@@ -73,7 +73,7 @@ public final class CRLFTerminatedReader extends Reader
 		}
 	}
 
-	private final InputStream in;
+	private final Reader in;
 
 	/**
 	 * Constructs this CRLFTerminatedReader.
@@ -86,7 +86,7 @@ public final class CRLFTerminatedReader extends Reader
 
 	public CRLFTerminatedReader(InputStream in)
 	{
-		this.in = in;
+		this.in = new Utf8InputStreamReader(in);
 	}
 
 	private final StringBuffer lineBuffer = new StringBuffer();
@@ -189,13 +189,13 @@ public final class CRLFTerminatedReader extends Reader
 	@Override
 	public boolean ready() throws IOException
 	{
-		return this.in.available() > 0;
+		return this.in.ready();
 	}
 
 	@Override
 	public int read(char[] cbuf, int off, int len) throws IOException
 	{
-		byte[] temp = new byte[len];
+		char[] temp = new char[len];
 		int result = this.in.read(temp, 0, len);
 		for (int i = 0; i < result; i++)
 			cbuf[i] = (char) temp[i];

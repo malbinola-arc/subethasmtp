@@ -84,7 +84,13 @@ public final class BdatCommand extends BaseCommand {
         if (args.length > 3) {
             return new Bdat("503 Error: too many arguments found for BDAT command");
         }
+
         boolean isLast = args.length == 3 && "LAST".equals(args[2]);
+
+        if (size == 0 && !isLast) {
+            return new Bdat("551 5.7.1 Error: Null BDAT request");
+        }
+
         return new Bdat(size, isLast);
     }
 

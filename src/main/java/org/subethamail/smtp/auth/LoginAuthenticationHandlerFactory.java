@@ -68,8 +68,7 @@ public final class LoginAuthenticationHandlerFactory implements AuthenticationHa
 		public Optional<String> auth(String clientInput, MessageContext context) throws RejectException
 		{
 			StringTokenizer stk = new StringTokenizer(clientInput);
-			String token = stk.nextToken();
-			if (token.trim().equalsIgnoreCase("AUTH"))
+			if (stk.hasMoreTokens() && stk.nextToken().trim().equalsIgnoreCase("AUTH"))
 			{
 				if (!stk.nextToken().trim().equalsIgnoreCase("LOGIN"))
 				{
@@ -83,10 +82,15 @@ public final class LoginAuthenticationHandlerFactory implements AuthenticationHa
 					// the username.
 					// .Net's built in System.Net.Mail.SmtpClient sends its
 					// authentication this way (and this way only).
-					byte[] decoded = Base64.getDecoder().decode(stk.nextToken());
-					if (decoded == null)
-						throw new RejectException(501, /*5.5.4*/
-								"Invalid command argument, not a valid Base64 string"); 
+					byte[] decoded;
+					try
+					{
+						decoded = Base64.getDecoder().decode(stk.nextToken());
+					} catch (IllegalArgumentException x)
+					{
+						throw new RejectException(501, /* 5.5.4 */
+								"Invalid command argument, not a valid Base64 string");
+					}
 					username = TextUtils.getStringUtf8(decoded);
 
 					return Optional.of("334 "
@@ -99,28 +103,23 @@ public final class LoginAuthenticationHandlerFactory implements AuthenticationHa
 				}
 			}
 
-			if (this.username == null)
+			byte[] decoded;
+			try 
 			{
-				byte[] decoded = Base64.getDecoder().decode(clientInput);
-				if (decoded == null)
-				{
-					throw new RejectException(501, /*5.5.4*/
-							"Invalid command argument, not a valid Base64 string");
-				}
+				decoded = Base64.getDecoder().decode(clientInput);
+			} catch (IllegalArgumentException x)
+			{
+				throw new RejectException(501, /* 5.5.4 */
+					"Invalid command argument, not a valid Base64 string");
+			}
 
+			if (this.username == null) {
 				this.username = TextUtils.getStringUtf8(decoded);
-
 				return Optional.of("334 "
 						+ Base64.getEncoder().encodeToString(
 								TextUtils.getAsciiBytes("Password:")));
 			}
 
-			byte[] decoded = Base64.getDecoder().decode(clientInput);
-			if (decoded == null)
-			{
-				throw new RejectException(501, /*5.5.4*/
-						"Invalid command argument, not a valid Base64 string");
-			}
 
 			String password = TextUtils.getStringUtf8(decoded);
 			try

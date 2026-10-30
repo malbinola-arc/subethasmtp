@@ -145,7 +145,9 @@ public final class SimpleMessageListenerAdapter implements MessageHandlerFactory
                     }
 
                     for (Delivery delivery : this.deliveries) {
-                        delivery.getListener().deliver(this.from, delivery.getRecipient(), dfos.getInputStream());
+                        try (InputStream in = dfos.getInputStream()) {
+                            delivery.getListener().deliver(this.from, delivery.getRecipient(), in);
+                        }
                     }
                 }
             }

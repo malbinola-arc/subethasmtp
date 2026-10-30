@@ -1,5 +1,6 @@
 package org.subethamail.smtp.server;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,6 +24,7 @@ import org.subethamail.smtp.DropConnectionException;
 import org.subethamail.smtp.MessageContext;
 import org.subethamail.smtp.MessageHandler;
 import org.subethamail.smtp.internal.io.CRLFTerminatedReader;
+import org.subethamail.smtp.internal.io.Utf8InputStreamReader;
 import org.subethamail.smtp.internal.proxy.ProxyHandler;
 import org.subethamail.smtp.internal.proxy.ProxyHandler.ProxyResult;
 import org.subethamail.smtp.internal.server.ServerThread;
@@ -36,6 +38,8 @@ import org.subethamail.smtp.server.SessionHandler.SessionAcceptance;
  * @author Jeff Schnitzer
  */
 public final class Session implements Runnable, MessageContext {
+    private static final int BUFFER_SIZE = 8192;
+
     private final static Logger log = LoggerFactory.getLogger(Session.class);
 
     /** A link to our parent server */
@@ -282,6 +286,13 @@ public final class Session implements Runnable, MessageContext {
 
                     // if people are screwing with things, close connection
                     return;
+                } catch (Utf8InputStreamReader.InvalidUTF8EncodingException ee) {
+                    String msg = "501 Syntax error: invalid character encoding.";
+
+                    log.debug(msg, ee);
+                    this.sendResponse(msg);
+
+                    return;
                 }
             }
         } finally {
@@ -313,7 +324,7 @@ public final class Session implements Runnable, MessageContext {
      */
     public void setSocket(Socket socket) throws IOException {
         this.socket = socket;
-        this.input = this.socket.getInputStream();
+        this.input = new BufferedInputStream(this.socket.getInputStream(), BUFFER_SIZE);
         this.reader = new CRLFTerminatedReader(this.input);
         this.output = this.socket.getOutputStream();
         this.writer = new PrintWriter(this.output);

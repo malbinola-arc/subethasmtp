@@ -3,10 +3,10 @@
     <parent>
         <groupId>com.github.davidmoten</groupId>
         <artifactId>sonatype-parent</artifactId>
-        <version>0.1</version>
+        <version>0.2.4</version>
     </parent>
     <artifactId>subethasmtp</artifactId>
-    <version>6.0.2-SNAPSHOT</version>
+    <version>7.2.3-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>${project.artifactId}</name>
     <description>A fork of a fork (!) of SubEtha, an easy-to-use server-side SMTP library for Java.</description>
@@ -15,7 +15,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <slf4j.version>1.7.32</slf4j.version>
+
+        <mail-api.version>2.1.5</mail-api.version>
+        <angus-mail.version>2.0.5</angus-mail.version>
+
+        <slf4j.version>1.7.36</slf4j.version>
     </properties>
 
     <inceptionYear>2006</inceptionYear>
@@ -23,7 +27,7 @@
         <connection>scm:git:https://github.com/davidmoten/subethasmtp.git</connection>
         <developerConnection>scm:git:https://github.com/davidmoten/subethasmtp.git</developerConnection>
         <url>scm:git:https://github.com:davidmoten/subethasmtp.git</url>
-        <tag>HEAD</tag>
+        <tag>7.1.7</tag>
     </scm>
     <issueManagement>
         <system>GitHub</system>
@@ -41,7 +45,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.16.0</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -50,7 +54,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.11.3</version>
                 <configuration>
                     <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>
@@ -59,7 +63,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.7</version>
+                <version>0.8.16</version>
                 <executions>
                     <execution>
                         <goals>
@@ -84,10 +88,18 @@
     </build>
     <dependencies>
         <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>jakarta.mail</artifactId>
-            <version>2.0.1</version>
+            <groupId>jakarta.mail</groupId>
+            <artifactId>jakarta.mail-api</artifactId>
+            <version>${mail-api.version}</version>
+            <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-mail</artifactId>
+            <version>${angus-mail.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -102,16 +114,17 @@
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>findbugs-annotations</artifactId>
             <version>3.0.1</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.github.davidmoten</groupId>
             <artifactId>guava-mini</artifactId>
-            <version>0.1.4</version>
+            <version>0.1.7</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.1.0</version>
+            <version>4.11.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -122,20 +135,8 @@
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>slf4j-jdk14</artifactId>
             <version>${slf4j.version}</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>log4j</artifactId>
-                    <groupId>log4j</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <artifactId>log4j</artifactId>
-            <groupId>log4j</groupId>
-            <version>1.2.17</version>
             <scope>test</scope>
         </dependency>
         <dependency>

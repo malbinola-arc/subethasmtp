@@ -11,6 +11,8 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.Optional;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +47,8 @@ public class SMTPClient implements AutoCloseable {
     private final Optional<SocketAddress> bindpoint;
 
     private volatile SocketAddress localSocketAddress;
+
+    private final SSLSocketFactory sslSocketFactory;
 
     /**
      * True if the client has been successfully connected to the server and not
@@ -128,9 +132,29 @@ public class SMTPClient implements AutoCloseable {
      *            were passed to the connect method.
      */
     public SMTPClient(Optional<SocketAddress> bindpoint, Optional<String> hostPortName) {
+        this(bindpoint, hostPortName, Optional.empty());
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param bindpoint
+     *            the local socket address. If empty, the system will pick up an
+     *            ephemeral port and a valid local address.
+     * @param hostPortName
+     *            Sets the name of the remote MTA for informative purposes.
+     *            Default is host:port, where host and port are the values which
+     *            were used to open the TCP connection to the server, as they
+     *            were passed to the connect method.
+     * @param sslSocketFactory
+     *            Configures the SSLSocketFactory to use when upgrading a connection to use SSL.
+     *            Defaults to the system SSLSocketFactory if unspecified.
+     */
+    public SMTPClient(Optional<SocketAddress> bindpoint, Optional<String> hostPortName, Optional<SSLSocketFactory> sslSocketFactory) {
         Preconditions.checkNotNull(bindpoint, "bindpoint cannot be null");
         this.bindpoint = bindpoint;
         this.hostPortName = hostPortName;
+        this.sslSocketFactory = sslSocketFactory.orElseGet(() -> (SSLSocketFactory) SSLSocketFactory.getDefault());
     }
 
     public static SMTPClient createAndConnect(String host, int port)
@@ -162,7 +186,18 @@ public class SMTPClient implements AutoCloseable {
         this.socket.bind(this.bindpoint.orElse(null));
         this.socket.setSoTimeout(REPLY_TIMEOUT);
         this.socket.connect(new InetSocketAddress(host, port), CONNECT_TIMEOUT);
+        updateSocket();
+        connected = true;
+    }
 
+    /**
+     * Called when replacing the existing socket with a new Socket, updating the readers, writers and streams derived
+     * from the socket.  Used on the initial connect() to set up IO, and on upgrading a connection to TLS,
+     * where the new Socket is an SSLSocket.
+     *
+     * @throws IOException
+     */
+    protected void updateSocket() throws IOException {
         try {
             this.localSocketAddress = this.socket.getLocalSocketAddress();
 
@@ -177,8 +212,6 @@ public class SMTPClient implements AutoCloseable {
             close();
             throw e;
         }
-
-        connected = true;
     }
 
     /**
@@ -330,4 +363,21 @@ public class SMTPClient implements AutoCloseable {
         return this.hostPortName.orElse(null);
     }
 
+    /**
+     * Upgrades the existing socket to use an SSL connection in client mode.
+     * @throws IOException
+     */
+    protected void performSSLHandshake() throws IOException {
+        InetSocketAddress remoteAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
+        if (remoteAddress == null){
+            throw new IllegalStateException("socket should be connected at this point");
+        }
+
+        SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socket, remoteAddress.getHostName(), socket.getPort(), true);
+        sslSocket.setUseClientMode(true);
+        sslSocket.startHandshake();
+
+        this.socket = sslSocket;
+        updateSocket();
+    }
 }

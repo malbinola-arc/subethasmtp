@@ -31,9 +31,9 @@ import javax.net.ssl.TrustManager;
 
 import org.subethamail.util.ExtendedTrustManager;
 
-import com.sun.mail.util.MailSSLSocketFactory;
+import org.eclipse.angus.mail.util.MailSSLSocketFactory;
 
-class TestUtil {
+public class TestUtil {
 
     private static final String PASSWORD = "password";
 
@@ -42,21 +42,21 @@ class TestUtil {
     static final String EMAIL_FROM = "fred@gmail.com";
     static final int PORT = 25000;
 
-    static SSLContext createTlsSslContext(KeyManager[] keyManagers, TrustManager[] trustManagers)
+    public static SSLContext createTlsSslContext(KeyManager[] keyManagers, TrustManager[] trustManagers)
             throws NoSuchAlgorithmException, KeyManagementException {
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(keyManagers, trustManagers, new java.security.SecureRandom());
         return sslContext;
     }
 
-    static TrustManager[] getTrustManagers() {
+    public static TrustManager[] getTrustManagers() {
         InputStream trustStore = StartTLSFullTest.class.getResourceAsStream("/trustStore.jks");
         TrustManager trustManager = new ExtendedTrustManager(trustStore, PASSWORD.toCharArray(), false);
         TrustManager[] trustManagers = new TrustManager[] { trustManager };
         return trustManagers;
     }
 
-    static KeyManager[] getKeyManagers() throws KeyStoreException, IOException, NoSuchAlgorithmException,
+    public static KeyManager[] getKeyManagers() throws KeyStoreException, IOException, NoSuchAlgorithmException,
             CertificateException, UnrecoverableKeyException {
         InputStream keyStore = StartTLSFullTest.class.getResourceAsStream("/keyStore.jks");
         KeyStore ks = KeyStore.getInstance("JKS");
@@ -86,8 +86,10 @@ class TestUtil {
         props.put("mail.smtp.port", PORT + "");
         if (connectionType == ConnectionType.START_TLS) {
             props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.ssl.checkserveridentity", "false");
         } else {
             props.put("mail.smtp.ssl.enable", "true");
+            props.put("mail.smtp.ssl.checkserveridentity", "false");
         }
         if (username != null) {
             props.setProperty("mail.smtp.submitter", username);

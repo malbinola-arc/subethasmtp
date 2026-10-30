@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 
 /**
  * This works like a ByteArrayOutputStream until a certain size is
@@ -66,7 +67,7 @@ public final class DeferredFileOutputStream extends ThresholdingOutputStream
 		// Open a temp file, write the byte array version, and swap the
 		// output stream to the file version.
 
-		this.outFile = File.createTempFile(TMPFILE_PREFIX, TMPFILE_SUFFIX);
+		this.outFile = Files.createTempFile(TMPFILE_PREFIX, TMPFILE_SUFFIX).toFile();
 		this.outFileStream = new FileOutputStream(this.outFile);
 
 		((ByteArrayOutputStream)this.output).writeTo(this.outFileStream);

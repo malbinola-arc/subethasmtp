@@ -122,5 +122,22 @@ public class BdatTest extends ServerTestCase
         this.send("BDAT -1 LAST");
         this.expect("503 Error: size token after BDAT must be non-negative integer");
     }
-    
+
+    public void testZeroSize() throws Exception
+    {
+        this.expect("220");
+
+        this.send("HELO foo.com");
+        this.expect("250");
+
+        this.send("MAIL FROM: success@subethamail.org");
+        this.expect("250");
+
+        this.send("RCPT TO: success@subethamail.org");
+        this.expect("250");
+
+        this.send("BDAT 0");
+        this.expect("551 5.7.1 Error: Null BDAT request");
+    }
+
 }

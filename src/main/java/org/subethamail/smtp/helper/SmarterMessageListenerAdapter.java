@@ -123,7 +123,9 @@ public class SmarterMessageListenerAdapter implements MessageHandlerFactory {
                     }
 
                     for (Receiver rec : this.deliveries) {
-                        rec.deliver(dfos.getInputStream());
+                        try (InputStream in = dfos.getInputStream()) {
+                            rec.deliver(in);
+                        }
                     }
                 }
             }
